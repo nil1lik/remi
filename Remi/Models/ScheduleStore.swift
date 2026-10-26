@@ -94,7 +94,7 @@ final class ScheduleStore {
         importRequestID += 1
     }
 
-    /// Dosya seçiciden ya da başka bir uygulamadan ("Paylaş → Ders Programı") gelen dosya.
+    /// Dosya seçiciden ya da başka bir uygulamadan ("Paylaş → Remi") gelen dosya.
     func prepareImport(from url: URL) {
         let accessing = url.startAccessingSecurityScopedResource()
         defer { if accessing { url.stopAccessingSecurityScopedResource() } }

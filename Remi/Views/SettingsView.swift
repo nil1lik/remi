@@ -114,17 +114,17 @@ struct SettingsView: View {
 
     private var permissionWarning: String? {
         if store.reminder.kind == .alarm, alarmDenied {
-            return "Alarm izni kapalı. Ayarlar → Ders Programı → Alarmlar'dan açabilirsin. O zamana kadar bildirim gönderilir."
+            return "Alarm izni kapalı. Ayarlar → Remi → Alarmlar'dan açabilirsin. O zamana kadar bildirim gönderilir."
         }
         if notificationStatus == .denied {
-            return "Bildirim izni kapalı. Ayarlar → Ders Programı → Bildirimler'den açmazsan hatırlatma gelmez."
+            return "Bildirim izni kapalı. Ayarlar → Remi → Bildirimler'den açmazsan hatırlatma gelmez."
         }
         return nil
     }
 
     private var programFooter: String {
         guard !store.lessons.isEmpty else {
-            return "Örnek Excel'i indir, gruplarını ve saatlerini yaz, sonra buradan içe aktar. Dosyaları WhatsApp ya da Dosyalar'dan \"Paylaş → Ders Programı\" ile de açabilirsin."
+            return "Örnek Excel'i indir, gruplarını ve saatlerini yaz, sonra buradan içe aktar. Dosyaları WhatsApp ya da Dosyalar'dan \"Paylaş → Remi\" ile de açabilirsin."
         }
         let groups = Set(store.lessons.map(\.title)).count
         var text = "\(groups) grup, haftada \(store.lessons.filter(\.isRecurring).count) ders."

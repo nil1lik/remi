@@ -2,7 +2,7 @@ import SwiftUI
 import UserNotifications
 
 @main
-struct DersProgramiApp: App {
+struct RemiApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var store = ScheduleStore()
     @Environment(\.scenePhase) private var scenePhase
@@ -11,7 +11,7 @@ struct DersProgramiApp: App {
         WindowGroup {
             ScheduleView()
                 .environment(store)
-                // Dosyalar / WhatsApp / Mail'den "Paylaş → Ders Programı" ile gelen Excel.
+                // Dosyalar / WhatsApp / Mail'den "Paylaş → Remi" ile gelen Excel.
                 .onOpenURL { url in
                     store.prepareImport(from: url)
                 }

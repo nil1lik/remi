@@ -2,14 +2,14 @@
 """Uygulamanın içindeki örnek Excel şablonunu üretir.
 
 Kullanım: python3 tools/make_template.py
-Çıktı: DersProgrami/Resources/Ders-Programi-Sablon.xlsx
+Çıktı: Remi/Resources/Ders-Programi-Sablon.xlsx
 """
 import os
 import zipfile
 from xml.sax.saxutils import escape
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, "DersProgrami", "Resources", "Ders-Programi-Sablon.xlsx")
+OUT = os.path.join(ROOT, "Remi", "Resources", "Ders-Programi-Sablon.xlsx")
 
 HEADERS = ["Grup / Sınıf", "Günler", "Saat", "Yer", "Not", "Tarih (tek seferlik)"]
 WIDTHS = [22, 22, 16, 18, 28, 20]
@@ -37,7 +37,7 @@ GUIDE = [
     ("   o satırda Günler'i boş bırak. Tarihi boş olan satırlar her hafta tekrarlanır.", 3),
     ("", 0),
     ("Bitirince dosyayı kaydet, uygulamada Ayarlar → \"Excel'den içe aktar\" ile seç.", 3),
-    ("Ya da Dosyalar / WhatsApp / Mail'de dosyaya uzun bas → Paylaş → Ders Programı.", 3),
+    ("Ya da Dosyalar / WhatsApp / Mail'de dosyaya uzun bas → Paylaş → Remi.", 3),
     ("Yeni içe aktarma eski programın yerine geçer.", 3),
 ]
 
