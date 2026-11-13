@@ -1,75 +1,146 @@
-# Remi
+<p align="center">
+  <img src="docs/icon.png" width="112" alt="Remi ikonu">
+</p>
 
-Hocaların ders gruplarını tutan ve her dersten önce hatırlatan iOS uygulaması. Grup merkezli: grup bir kez
-girilir (ad, renk, WhatsApp/Telegram bağlantısı, günler, saat, hatırlatma), dersler her hafta kendiliğinden gelir.
-Türkçe, İngilizce ve Arapça (sağdan sola). Backend: [`backend/`](backend/README.md).
+<h1 align="center">Remi</h1>
 
-## Ekranlar
+<p align="center">
+  <b>Derslerin zamanında, grupların tek yerde.</b><br>
+  Hocalar için ders grubu ve hatırlatma uygulaması · iOS + .NET API
+</p>
 
-- **Açılış ve giriş:** Remi moru zemin, logo, dil seçici (TR / EN / ع), Apple ile, Google ile ya da girişsiz devam.
-  Sunucu adresi yoksa yalnız girişsiz kullanım görünür.
-- **Kişiselleştir:** dil, hitap, uygulama rengi (6), görünüm (otomatik / açık / koyu); seçtikçe ekran değişir.
-- **Bugün:** minimal hafta şeridi, günün özeti (ders · saat · ilk–son), "Güzel haber: bu sabah/akşam boşsun",
-  sıradaki ders (ping noktası, grubu aç), ders listesi, tatil etiketi.
-- **Tatil modu:** hoca tatildeyken ana sayfa uyur; "Tatilden geldim" ile uyanır. Bitiş tarihi geçince kendiliğinden uyanır.
-- **+ menüsü:** Hızlı grup (ad, gün, saat), Yeni grup (tüm ayarlar), Tatil gir (ben ya da seçili gruplar).
-- **Program:** gruplar ya da hafta görünümü; Excel indir ve yazdır.
-- **Grup:** WhatsApp/Telegram grubunu aç, yerinde hatırlatma tekerleği ve tatil, sıradaki dersler, sil.
-- **Profil:** hesap ve yedek durumu, dil, görünüm, renk, varsayılan hatırlatma, "Ben tatildeyim", deneme bildirimi,
-  çıkış, hesabı silme.
+<p align="center">
+  <img alt="iOS 17+" src="https://img.shields.io/badge/iOS-17%2B-2A1F7A">
+  <img alt="SwiftUI" src="https://img.shields.io/badge/SwiftUI-Observation-4B3BDB">
+  <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4">
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-17-336791">
+  <img alt="Diller" src="https://img.shields.io/badge/dil-TR%20%C2%B7%20EN%20%C2%B7%20AR-FF6B4A">
+</p>
 
-Formlar üst üste açılmaz; yatay kaydırma yoktur; hatırlatma süresi tekerlekle seçilir (0–60 dk ya da 1–12 saat).
+---
 
-## Hatırlatmalar
+Remi, birden çok grupla ders yapan hocalar için yazıldı. Her grup bir kez girilir: adı, rengi, WhatsApp ya da
+Telegram bağlantısı, günleri, saati ve ne kadar önce hatırlatılacağı. Dersler her hafta kendiliğinden gelir;
+Remi her dersten önce bildirim ya da alarmla haber verir, tatildeyken susar.
 
-- Tatili olmayan gruplar haftalık tekrar eden bildirimle kurulur; uygulama açılmasa da çalışır.
-- Grubun ya da hocanın tatili varsa önümüzdeki 21 gün tek tek kurulur, tatil günleri atlanır; tatil bitiminde
-  "Hatırlatmalar yeniden açık" bildirimi gelir.
-- Alarm seçilen gruplar iOS 26+ AlarmKit ile tam ekran alarm olarak çalar; eski iOS'ta bildirim gönderilir.
-- iOS en fazla 64 bekleyen bildirim tutar; çok kalabalık programda en yakın 7 gün kurulur ve açılışta yenilenir.
+<p align="center">
+  <img src="docs/screenshots/01-giris.png" width="200" alt="Giriş">
+  <img src="docs/screenshots/02-bugun.png" width="200" alt="Bugün">
+  <img src="docs/screenshots/05-grup.png" width="200" alt="Grup">
+  <img src="docs/screenshots/07-tatil-modu.png" width="200" alt="Tatil modu">
+</p>
 
-## Veri ve güvenlik
+## Özellikler
 
-- Uygulama çevrimdışı çalışır; veri telefonda şifreli dosya korumasıyla saklanır.
-- Giriş yapılırsa değişiklikler sunucuya gönderilir ve diğer cihazlardan gelenler çekilir (sürüm çakışmasında
-  sunucudaki hal kazanır). Yenileme anahtarı Keychain'de (yalnız bu cihaz), erişim anahtarı yalnız bellekte.
-- Apple girişinde her seferinde yeni nonce; Google girişi SDK'sız, PKCE ve `state` kontrolüyle.
-- Grup adı ve bağlantı kuralları sunucudakiyle aynıdır (yalnız https WhatsApp/Telegram grup adresleri).
-- Release'te API yalnız https ile çalışır; ATS yalnız yerel ağ için gevşek.
+**Bugün**
+- Minimal hafta şeridi; kaydırınca hafta değişir.
+- Günün özeti: kaç ders, toplam kaç saat, ilk ve son ders.
+- **Güzel haber:** sabah ya da akşam hiç ders yoksa "Bu sabah boşsun" kartı.
+- Sıradaki ders, kalan süre ve tek dokunuşla grubun WhatsApp/Telegram sohbeti.
 
-## Yapı
+**Gruplar**
+- **Hızlı grup:** yalnız ad, günler ve saat; gerisi otomatik.
+- **Yeni grup:** renk, sohbet bağlantısı (yapıştırınca tanınır), süre, hatırlatma.
+- Hatırlatma süresi elle yazılmaz, tekerlekle seçilir: 0–60 dakika ya da 1–12 saat önce; bildirim ya da alarm.
+
+**Tatil**
+- Bir grubu ya da hepsini tatile al: 1 hafta, 2 hafta, 1 ay ya da istediğin tarihe kadar.
+- **Ben tatildeyim:** tüm hatırlatmalar susar, ana sayfa uyur. "Tatilden geldim"e basınca Remi uyanır;
+  tarih geçince kendiliğinden uyanır.
+
+**Program**
+- Gruplar ya da gün gün hafta görünümü.
+- Programı **Excel olarak indir** ya da **yazdır** (bağlantılar ve tatil notlarıyla).
+
+**Kişiselleştirme**
+- Türkçe, İngilizce ve Arapça (sağdan sola, Arapça rakamlar).
+- Açık, koyu ya da otomatik tema; 6 uygulama rengi.
+- Apple ya da Google ile giriş; yedekleme ve cihazlar arası eşitleme. Giriş yapmadan da tam çalışır.
+
+<p align="center">
+  <img src="docs/screenshots/03-hizli-islem.png" width="160" alt="Hızlı işlem">
+  <img src="docs/screenshots/04-yeni-grup.png" width="160" alt="Yeni grup">
+  <img src="docs/screenshots/06-tatil.png" width="160" alt="Tatil gir">
+  <img src="docs/screenshots/08-program.png" width="160" alt="Program">
+  <img src="docs/screenshots/09-excel-yazdir.png" width="160" alt="Excel ve yazdırma">
+</p>
+<p align="center">
+  <img src="docs/screenshots/10-profil-en-koyu.png" width="160" alt="Profil, İngilizce, koyu tema">
+  <img src="docs/screenshots/11-bugun-ar-koyu.png" width="160" alt="Bugün, Arapça, koyu tema">
+  <img src="docs/screenshots/12-hafta-ar.png" width="160" alt="Hafta, Arapça">
+</p>
+
+## Mimari
 
 ```
-Remi/
-  App/            Giriş noktası, kök akış, Debug demo modu
-  Core/           Modeller, kurallar, günlük plan, TR/EN/AR metinler
-  Data/           AppStore (tek veri kaynağı, eşitleme kuyruğu), Keychain
-  Services/       Hatırlatmalar, API istemcisi, Apple/Google girişi, eşitleme, Excel, yazdırma
-  DesignSystem/   Marka renkleri, logo, ortak bileşenler, hatırlatma tekerleği
-  Features/       Ekranlar
-  Resources/      Assets, Bricolage Grotesque (OFL)
-Config/Info.plist RemiAPIBaseURL, GoogleClientID, yazı tipi, ATS
-Tests/            Çekirdek testleri (Xcode'suz) + Excel doğrulaması
-tools/make_icon.swift  Uygulama ikonu
+Remi/                     iOS uygulaması (SwiftUI, Observation)
+  Core/                   Modeller, kurallar, günlük plan, TR/EN/AR metinler
+  Data/                   AppStore (tek veri kaynağı, çevrimdışı kuyruk), Keychain
+  Services/               Hatırlatmalar (UserNotifications, AlarmKit), API, giriş, eşitleme, Excel, yazdırma
+  DesignSystem/           Marka, logo, ortak bileşenler
+  Features/               Ekranlar
+backend/                  .NET 10 API, DDD katmanlı
+  src/Remi.Domain         Account ve Group aggregate'leri, value object'ler (bağımlılıksız)
+  src/Remi.Application    Kullanım senaryoları ve port arayüzleri
+  src/Remi.Infrastructure EF Core + PostgreSQL, Apple/Google kimlik doğrulama, JWT
+  src/Remi.Api            Minimal API, güvenlik ayarları
 ```
 
-Ayarlar (`project.pbxproj`): `REMI_API_BASE_URL` (Debug: `http://localhost:8080`, Release: boş) ve
-`GOOGLE_CLIENT_ID` (boşsa Google girişi gizli). Sunucu yayına alınınca Release adresi doldurulur.
+- **Çevrimdışı öncelikli:** her değişiklik önce telefona yazılır; giriş yapılmışsa sunucuya gönderilir ve
+  diğer cihazlardaki değişiklikler revizyon sayacıyla çekilir. Sürüm çakışmasında sunucudaki hal kazanır.
+- **Hatırlatmalar:** tatilsiz gruplar haftalık tekrar eden bildirimle kurulur (uygulama açılmasa da çalışır);
+  tatil varsa günler tek tek planlanır ve tatil günleri atlanır.
+- **Aynı kurallar iki tarafta:** grup adı, sohbet bağlantısı, saat ve hatırlatma kuralları hem uygulamada hem
+  sunucuda (value object'lerde) aynıdır.
 
-## Geliştirme
+Ayrıntılar: [backend/README.md](backend/README.md).
+
+## Güvenlik
+
+- Şifre tutulmaz; Apple/Google kimlik belgesi sunucuda imza, uygulama kimliği, süre ve nonce ile doğrulanır.
+  Google girişi SDK'sız, PKCE ve `state` kontrolüyle.
+- 15 dakikalık erişim anahtarı yalnız bellekte; yenileme anahtarı Keychain'de (yalnız bu cihaz) ve sunucuda
+  yalnız özeti. Her kullanımda yenilenir; çalınıp tekrar kullanılırsa oturumun tüm anahtarları iptal edilir.
+- Her hesap yalnız kendi verisini görür; başkasının kaydı "yok" görünür.
+- Sohbet bağlantıları yalnız `https://chat.whatsapp.com`, `https://t.me`, `https://telegram.me` grup adresleri.
+- Hız sınırı, istek boyutu sınırı, güvenlik başlıkları, iç ayrıntı vermeyen hata yanıtları.
+- Hesap silme: hesap ve sunucudaki tüm veri kalıcı olarak silinir.
+
+## Çalıştırma
+
+**iOS** (Xcode 26+, iOS 17+):
 
 ```sh
-./Tests/run.sh                    # kurallar, günlük plan, metinler, Excel (openpyxl gerekir)
-swift tools/make_icon.swift Remi/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+open Remi.xcodeproj        # bir simülatör seç, ▶
+./Tests/run.sh             # çekirdek testleri ve Excel doğrulaması (openpyxl gerekir)
 ```
 
-Debug derlemesinde demo modu (örnek veriyle doğrudan bir ekran, veri diske yazılmaz):
-`SIMCTL_CHILD_REMI_DEMO=1 SIMCTL_CHILD_REMI_SCREEN=today SIMCTL_CHILD_REMI_LANG=ar SIMCTL_CHILD_REMI_THEME=dark xcrun simctl launch <cihaz> com.niloya.remi`
-(ekranlar: today, program, week, group, export, profile, menu, quick, new, edit, vacation, sleep, login, personalize, empty).
+Debug derlemesi API'yi `http://localhost:8080` adresinde arar; sunucu yoksa uygulama girişsiz çalışır.
+Örnek veriyle belirli bir ekranı açmak için demo modu (yalnız Debug, diske yazmaz):
 
-## TestFlight
+```sh
+SIMCTL_CHILD_REMI_DEMO=1 SIMCTL_CHILD_REMI_SCREEN=today SIMCTL_CHILD_REMI_LANG=ar \
+  xcrun simctl launch booted com.niloya.remi
+```
 
-1. Apple Developer üyeliği (yıllık ücretli) ve Xcode → Settings → Accounts'a hesap.
-2. Projeye ekip ve **Sign in with Apple** yeteneği eklenir; `com.niloya.remi` kaydedilir.
-3. App Store Connect'te uygulama oluşturulur, Xcode → Product → Archive → Distribute App ile yüklenir.
-4. TestFlight → İç Test grubuna test kullanıcısı eklenir; telefona TestFlight'tan kurulur.
+**Backend** (.NET 10, Docker):
+
+```sh
+cd backend
+dotnet test                              # 84 test (domain + uçtan uca API)
+cp .env.example .env                     # POSTGRES_PASSWORD ve AUTH_SIGNING_KEY doldur
+docker compose up -d --build
+curl http://127.0.0.1:8080/health
+```
+
+## Durum
+
+- [x] iOS uygulaması: tüm ekranlar, üç dil, açık/koyu tema, hatırlatmalar, tatil, Excel/yazdırma
+- [x] Backend: giriş, profil, gruplar, eşitleme, hesap silme; testler
+- [ ] Sunucunun yayına alınması ve Release'te API adresi
+- [ ] Apple Developer: Sign in with Apple yeteneği ve TestFlight
+- [ ] Google girişi için iOS istemci kimliği
+
+## Teşekkür
+
+Başlık yazı tipi [Bricolage Grotesque](https://github.com/ateliertriay/bricolage) (SIL Open Font License 1.1).
