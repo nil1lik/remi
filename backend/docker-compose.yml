@@ -1,0 +1,44 @@
+# Yerel geliştirme: PostgreSQL + API. Gizli değerler .env dosyasından gelir (depoya girmez).
+#   cp .env.example .env   # değerleri doldur
+#   docker compose up -d --build
+services:
+  db:
+    image: postgres:17.5-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: remi
+      POSTGRES_USER: remi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}
+    volumes:
+      - remi-db:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"   # yalnız bu bilgisayardan erişilir
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U remi -d remi"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Remi: "Host=db;Database=remi;Username=remi;Password=${POSTGRES_PASSWORD}"
+      Auth__SigningKey: ${AUTH_SIGNING_KEY:?AUTH_SIGNING_KEY gerekli}
+      Auth__Google__ClientIds__0: ${GOOGLE_IOS_CLIENT_ID:-}
+      Database__MigrateOnStartup: "true"
+    ports:
+      - "127.0.0.1:8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  remi-db:

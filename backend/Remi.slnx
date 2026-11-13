@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Remi.Api/Remi.Api.csproj" />
+    <Project Path="src/Remi.Application/Remi.Application.csproj" />
+    <Project Path="src/Remi.Domain/Remi.Domain.csproj" />
+    <Project Path="src/Remi.Infrastructure/Remi.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Remi.Api.Tests/Remi.Api.Tests.csproj" />
+    <Project Path="tests/Remi.Domain.Tests/Remi.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
