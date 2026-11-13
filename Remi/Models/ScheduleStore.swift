@@ -66,11 +66,57 @@ final class ScheduleStore {
         lesson.customReminder ?? reminder
     }
 
+    /// Kayıtlı grup adları, en çok kullanılandan aza (elle eklerken öneri olarak).
+    var groupTitles: [String] {
+        var counts: [String: Int] = [:]
+        for lesson in lessons { counts[lesson.title, default: 0] += 1 }
+        return counts.sorted { ($1.value, $0.key) < ($0.value, $1.key) }.map(\.key)
+    }
+
+    /// Aynı adlı son kayıt; yeni derse yer ve süreyi önermek için.
+    func template(forTitle title: String) -> Lesson? {
+        let key = ScheduleImporter.normalize(title)
+        return lessons.last { ScheduleImporter.normalize($0.title) == key }
+    }
+
+    /// Verilen derslerle aynı gün ve saatte çakışan kayıtlar.
+    func conflicts(with candidates: [Lesson], excluding excluded: Set<Lesson.ID> = []) -> [Lesson] {
+        lessons.filter { existing in
+            !excluded.contains(existing.id) && candidates.contains { $0.overlaps(existing) }
+        }
+        .sorted { ($0.weekday?.rawValue ?? 8, $0.start) < ($1.weekday?.rawValue ?? 8, $1.start) }
+    }
+
     // MARK: Değişiklikler
 
     func update(_ lesson: Lesson) {
         guard let index = lessons.firstIndex(where: { $0.id == lesson.id }), lessons[index] != lesson else { return }
         lessons[index] = lesson
+        save()
+        rescheduleReminders()
+    }
+
+    /// Elle eklenen dersler. İlk eklemede hatırlatma izni istenir.
+    func add(_ newLessons: [Lesson]) {
+        guard !newLessons.isEmpty else { return }
+        let wasEmpty = lessons.isEmpty
+        lessons.append(contentsOf: newLessons)
+        save()
+        if wasEmpty {
+            Task {
+                await scheduler.requestPermissions(for: reminder.kind)
+                rescheduleReminders()
+            }
+        } else {
+            rescheduleReminders()
+        }
+    }
+
+    /// Düzenlenen dersi ilk kayıtla değiştirir, kalanları (yeni seçilen günler) ekler.
+    func replace(_ id: Lesson.ID, with edited: [Lesson]) {
+        guard let index = lessons.firstIndex(where: { $0.id == id }), let first = edited.first else { return }
+        lessons[index] = first
+        lessons.append(contentsOf: edited.dropFirst())
         save()
         rescheduleReminders()
     }
@@ -106,9 +152,16 @@ final class ScheduleStore {
         }
     }
 
-    func applyPendingImport() {
+    /// `merge` doğruysa dosyadaki dersler mevcut programa eklenir (aynısı zaten varsa atlanır),
+    /// değilse programın yerine geçer.
+    func applyPendingImport(merge: Bool = false) {
         guard let pending = pendingImport else { return }
-        lessons = pending.result.lessons
+        if merge {
+            let existing = Set(lessons.map(\.identityKey))
+            lessons += pending.result.lessons.filter { !existing.contains($0.identityKey) }
+        } else {
+            lessons = pending.result.lessons
+        }
         lastImport = .now
         pendingImport = nil
         save()

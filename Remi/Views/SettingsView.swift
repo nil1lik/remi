@@ -54,6 +54,12 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink {
+                        ProgramEditorView()
+                    } label: {
+                        Label(store.lessons.isEmpty ? "Elle program oluştur" : "Haftalık programı düzenle",
+                              systemImage: "calendar.day.timeline.left")
+                    }
                     if let url = TemplateFile.url {
                         ShareLink(item: url, preview: SharePreview("Ders Programı Şablonu")) {
                             Label("Örnek Excel'i indir", systemImage: "arrow.down.doc")
@@ -124,7 +130,7 @@ struct SettingsView: View {
 
     private var programFooter: String {
         guard !store.lessons.isEmpty else {
-            return "Örnek Excel'i indir, gruplarını ve saatlerini yaz, sonra buradan içe aktar. Dosyaları WhatsApp ya da Dosyalar'dan \"Paylaş → Remi\" ile de açabilirsin."
+            return "Derslerini elle ekleyebilir ya da örnek Excel'i doldurup buradan içe aktarabilirsin. Dosyaları WhatsApp ya da Dosyalar'dan \"Paylaş → Remi\" ile de açabilirsin."
         }
         let groups = Set(store.lessons.map(\.title)).count
         var text = "\(groups) grup, haftada \(store.lessons.filter(\.isRecurring).count) ders."

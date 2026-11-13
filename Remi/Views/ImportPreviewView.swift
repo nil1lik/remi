@@ -89,19 +89,38 @@ struct ImportPreviewView: View {
             .safeAreaInset(edge: .bottom) {
                 if !lessons.isEmpty {
                     VStack(spacing: 8) {
-                        Button {
-                            store.applyPendingImport()
-                        } label: {
-                            Text("Programı yükle")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        if !store.lessons.isEmpty {
-                            Text("Mevcut programın yerine geçer.")
+                        if store.lessons.isEmpty {
+                            Button {
+                                store.applyPendingImport()
+                            } label: {
+                                Text("Programı yükle")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                        } else {
+                            Button {
+                                store.applyPendingImport(merge: true)
+                            } label: {
+                                Text("Mevcut programa ekle")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                            Button {
+                                store.applyPendingImport(merge: false)
+                            } label: {
+                                Text("Programın yerine geçsin")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.large)
+                            Text("Ekle: elle girdiğin dersler kalır, aynısı olanlar tekrar eklenmez.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
                         }
                     }
                     .padding(.horizontal, 20)

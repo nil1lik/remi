@@ -7,6 +7,13 @@ struct ScheduleView: View {
     @State private var showSettings = false
     @State private var showFilePicker = false
     @State private var openedLesson: Lesson?
+    @State private var newLessonDay: NewLessonDay?
+    @State private var showProgram = false
+
+    private struct NewLessonDay: Identifiable {
+        let id = UUID()
+        var day: Date
+    }
 
     private var calendar: Calendar { .schedule }
     private var isToday: Bool { calendar.isDateInToday(selectedDay) }
@@ -16,23 +23,37 @@ struct ScheduleView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    Text(DateText.dayMonth.string(from: selectedDay).capitalized(with: Locale(identifier: "tr_TR")))
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .padding(.top, -8)
+                    TimelineView(.everyMinute) { context in
+                        let date = DateText.dayMonth.string(from: selectedDay).capitalized(with: Locale(identifier: "tr_TR"))
+                        Text(isToday ? "\(DayMood(date: context.date).greeting) · \(date)" : date)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .contentTransition(.opacity)
+                    }
+                    .padding(.top, -8)
 
                     WeekStrip(selectedDay: $selectedDay)
 
                     if store.lessons.isEmpty {
-                        EmptyScheduleView { showFilePicker = true }
+                        EmptyScheduleView(
+                            onCreate: { newLessonDay = NewLessonDay(day: selectedDay) },
+                            onImport: { showFilePicker = true }
+                        )
+                        .transition(.opacity.combined(with: .scale(scale: 0.97)))
                     } else {
                         dayContent
+                            .id(selectedDay)
+                            .transition(.asymmetric(
+                                insertion: .opacity.combined(with: .offset(y: 14)),
+                                removal: .opacity
+                            ))
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 32)
             }
-            .background(Color.appBackground)
+            .background { AmbientBackground() }
+            .animation(.snappy, value: store.lessons.isEmpty)
             .navigationTitle(isToday ? "Bugün" : Weekday(date: selectedDay).name)
             .toolbar {
                 if !isToday {
@@ -42,7 +63,21 @@ struct ScheduleView: View {
                         }
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    if !store.lessons.isEmpty {
+                        Button {
+                            showProgram = true
+                        } label: {
+                            Image(systemName: "calendar.day.timeline.left")
+                        }
+                        .accessibilityLabel("Haftalık program")
+                        Button {
+                            newLessonDay = NewLessonDay(day: selectedDay)
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                        .accessibilityLabel("Ders ekle")
+                    }
                     Button {
                         showSettings = true
                     } label: {
@@ -53,6 +88,16 @@ struct ScheduleView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+            }
+            .sheet(item: $newLessonDay) { request in
+                NavigationStack {
+                    LessonEditorView(initialDay: request.day, inSheet: true)
+                }
+            }
+            .sheet(isPresented: $showProgram) {
+                NavigationStack {
+                    ProgramEditorView(showsDone: true)
+                }
             }
             .sheet(item: $openedLesson) { lesson in
                 LessonDetailView(lessonID: lesson.id)
@@ -80,7 +125,9 @@ struct ScheduleView: View {
                 }
             }
             .onChange(of: store.pendingImport?.id) {
-                if store.pendingImport != nil { showSettings = false; openedLesson = nil }
+                if store.pendingImport != nil {
+                    showSettings = false; openedLesson = nil; showProgram = false; newLessonDay = nil
+                }
             }
         }
     }
@@ -91,7 +138,7 @@ struct ScheduleView: View {
         TimelineView(.everyMinute) { context in
             VStack(alignment: .leading, spacing: 12) {
                 if lessons.isEmpty {
-                    FreeDayCard()
+                    FreeDayCard { newLessonDay = NewLessonDay(day: selectedDay) }
                 } else {
                     if isToday {
                         NowCard(lessons: lessons, day: selectedDay, now: context.date)
@@ -116,7 +163,12 @@ struct ScheduleView: View {
                                        state: state(of: lesson, now: context.date),
                                        reminder: store.effectiveReminder(for: lesson))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PressableStyle())
+                        .scrollTransition(.animated(.snappy)) { content, phase in
+                            content
+                                .opacity(phase.isIdentity ? 1 : 0.6)
+                                .scaleEffect(phase.isIdentity ? 1 : 0.96)
+                        }
                     }
                 }
             }
@@ -363,16 +415,31 @@ struct LessonCard: View {
 }
 
 struct FreeDayCard: View {
+    var onAdd: () -> Void
+    @State private var glow = false
+
     var body: some View {
         VStack(spacing: 10) {
             Image(systemName: "sun.max.fill")
                 .font(.system(size: 40))
                 .foregroundStyle(.orange.gradient)
+                .rotationEffect(.degrees(glow ? 18 : 0))
+                .scaleEffect(glow ? 1.06 : 1)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) { glow = true }
+                }
             Text("Bu gün ders yok")
                 .font(.headline)
             Text("Keyfini çıkar.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+            Button(action: onAdd) {
+                Label("Bu güne ders ekle", systemImage: "plus")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .padding(.top, 6)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -381,68 +448,173 @@ struct FreeDayCard: View {
 }
 
 struct EmptyScheduleView: View {
+    var onCreate: () -> Void
     var onImport: () -> Void
+    @State private var animate = false
 
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "calendar.badge.plus")
-                .font(.system(size: 52))
-                .foregroundStyle(Color.accentColor.gradient)
-                .padding(.top, 12)
+        VStack(spacing: 22) {
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                    .scaleEffect(animate ? 1.08 : 0.92)
+                Circle()
+                    .fill(Color.accentColor.opacity(0.18))
+                    .frame(width: 84, height: 84)
+                Image(systemName: "calendar.badge.plus")
+                    .font(.system(size: 42, weight: .medium))
+                    .foregroundStyle(Color.accentColor.gradient)
+                    .symbolEffect(.bounce, value: animate)
+            }
+            .padding(.top, 8)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) { animate = true }
+            }
 
             VStack(spacing: 6) {
-                Text("Ders programını ekle")
-                    .font(.title3.weight(.bold))
-                Text("Programını Excel'de hazırla, buraya yükle. Dersler başlamadan sana haber verelim.")
+                Text("Programını oluştur")
+                    .font(.title2.weight(.bold))
+                Text("Derslerini buraya ekle, başlamadan önce sana haber verelim.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
 
-            VStack(alignment: .leading, spacing: 14) {
-                StepRow(number: 1, text: "Örnek Excel'i indir")
-                StepRow(number: 2, text: "Gruplarını ve saatlerini yazıp kaydet")
-                StepRow(number: 3, text: "Buraya geri yükle")
+            VStack(spacing: 12) {
+                ChoiceCard(
+                    title: "Elle oluştur",
+                    subtitle: "Grup adı, günler ve saat. Yarım dakika.",
+                    systemImage: "square.and.pencil",
+                    colors: [Color(red: 0.39, green: 0.40, blue: 0.95), Color(red: 0.58, green: 0.36, blue: 0.90)],
+                    prominent: true,
+                    action: onCreate
+                )
+                ChoiceCard(
+                    title: "Excel'den yükle",
+                    subtitle: "Programın tabloda hazırsa tek seferde aktar.",
+                    systemImage: "tablecells",
+                    colors: [Color(red: 0.05, green: 0.65, blue: 0.62), Color(red: 0.20, green: 0.66, blue: 0.33)],
+                    prominent: false,
+                    action: onImport
+                )
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(Color.appBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-            VStack(spacing: 10) {
-                if let url = TemplateFile.url {
-                    ShareLink(item: url, preview: SharePreview("Ders Programı Şablonu")) {
-                        Label("Örnek Excel'i indir", systemImage: "arrow.down.doc")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
+            if let url = TemplateFile.url {
+                ShareLink(item: url, preview: SharePreview("Ders Programı Şablonu")) {
+                    Label("Örnek Excel'i indir", systemImage: "arrow.down.doc")
+                        .font(.footnote.weight(.medium))
                 }
-                Button(action: onImport) {
-                    Label("Excel'i içe aktar", systemImage: "square.and.arrow.down")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
             }
         }
         .padding(20)
-        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 }
 
-struct StepRow: View {
-    let number: Int
-    let text: String
+private struct ChoiceCard: View {
+    let title: String
+    let subtitle: String
+    let systemImage: String
+    let colors: [Color]
+    let prominent: Bool
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Text("\(number)")
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(.white)
-                .frame(width: 26, height: 26)
-                .background(Color.accentColor, in: Circle())
-            Text(text)
-                .font(.subheadline.weight(.medium))
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: systemImage)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(prominent ? AnyShapeStyle(.white) : AnyShapeStyle(colors[0]))
+                    .frame(width: 48, height: 48)
+                    .background {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(prominent ? AnyShapeStyle(.white.opacity(0.2)) : AnyShapeStyle(colors[0].opacity(0.14)))
+                    }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.headline)
+                    Text(subtitle)
+                        .font(.footnote)
+                        .opacity(prominent ? 0.85 : 1)
+                        .foregroundStyle(prominent ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .opacity(0.6)
+            }
+            .foregroundStyle(prominent ? .white : .primary)
+            .padding(14)
+            .background {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(prominent
+                          ? AnyShapeStyle(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing))
+                          : AnyShapeStyle(Color.appBackground))
+            }
+            .shadow(color: prominent ? colors[0].opacity(0.35) : .clear, radius: 14, y: 8)
+        }
+        .buttonStyle(PressableStyle())
+    }
+}
+
+/// Basılınca hafifçe küçülen düğme.
+struct PressableStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+/// Günün saatine göre selamlama ve arka plan tonu.
+struct DayMood {
+    let greeting: String
+    let colors: [Color]
+
+    init(date: Date = .now) {
+        switch Calendar.schedule.component(.hour, from: date) {
+        case 5..<12:
+            greeting = "Günaydın"
+            colors = [Color(red: 1.0, green: 0.62, blue: 0.38), Color(red: 0.98, green: 0.45, blue: 0.62)]
+        case 12..<18:
+            greeting = "İyi günler"
+            colors = [Color(red: 0.39, green: 0.40, blue: 0.95), Color(red: 0.13, green: 0.70, blue: 0.85)]
+        case 18..<23:
+            greeting = "İyi akşamlar"
+            colors = [Color(red: 0.58, green: 0.36, blue: 0.90), Color(red: 0.95, green: 0.40, blue: 0.60)]
+        default:
+            greeting = "İyi geceler"
+            colors = [Color(red: 0.20, green: 0.25, blue: 0.70), Color(red: 0.45, green: 0.30, blue: 0.85)]
+        }
+    }
+}
+
+/// Üstte günün saatine göre renk değiştiren yumuşak ışık.
+struct AmbientBackground: View {
+    @State private var drift = false
+
+    var body: some View {
+        TimelineView(.everyMinute) { context in
+            let mood = DayMood(date: context.date)
+            ZStack(alignment: .top) {
+                Color.appBackground
+                Circle()
+                    .fill(mood.colors[0].opacity(0.32))
+                    .frame(width: 360, height: 360)
+                    .blur(radius: 90)
+                    .offset(x: drift ? -110 : -70, y: -170)
+                Circle()
+                    .fill(mood.colors[1].opacity(0.26))
+                    .frame(width: 320, height: 320)
+                    .blur(radius: 90)
+                    .offset(x: drift ? 120 : 160, y: drift ? -120 : -150)
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.easeInOut(duration: 9).repeatForever(autoreverses: true)) { drift = true }
         }
     }
 }

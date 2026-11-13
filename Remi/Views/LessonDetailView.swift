@@ -6,6 +6,8 @@ struct LessonDetailView: View {
     @Environment(ScheduleStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
+    @State private var editing = false
+    @State private var detent: PresentationDetent = .medium
 
     private var lesson: Lesson? { store.lessons.first { $0.id == lessonID } }
 
@@ -17,7 +19,7 @@ struct LessonDetailView: View {
                 ContentUnavailableView("Ders bulunamadı", systemImage: "calendar.badge.exclamationmark")
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.medium, .large], selection: $detent)
         .presentationDragIndicator(.visible)
     }
 
@@ -94,16 +96,23 @@ struct LessonDetailView: View {
                 Button("Bu dersi programdan sil", role: .destructive) {
                     confirmDelete = true
                 }
-            } footer: {
-                Text("Excel'i yeniden içe aktarınca program dosyadaki haliyle yenilenir.")
             }
         }
         .navigationTitle("Ders")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Düzenle") {
+                    detent = .large
+                    editing = true
+                }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Bitti") { dismiss() }
             }
+        }
+        .navigationDestination(isPresented: $editing) {
+            LessonEditorView(original: lesson)
         }
         .confirmationDialog("\(lesson.title) silinsin mi?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Sil", role: .destructive) {

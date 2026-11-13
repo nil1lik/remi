@@ -110,6 +110,37 @@ struct Lesson: Identifiable, Codable, Hashable {
         calendar.startOfDay(for: day).addingTimeInterval(TimeInterval((end ?? start + 40) * 60))
     }
 
+    /// Gün ve saat aralığı kesişiyorsa (bitiş yoksa 40 dk sayılır).
+    func overlaps(_ other: Lesson) -> Bool {
+        guard id != other.id else { return false }
+        let sameDay: Bool
+        switch (date, other.date) {
+        case let (a?, b?): sameDay = Calendar.schedule.isDate(a, inSameDayAs: b)
+        case let (a?, nil): sameDay = Weekday(date: a) == other.weekday
+        case let (nil, b?): sameDay = weekday == Weekday(date: b)
+        case (nil, nil): sameDay = weekday == other.weekday
+        }
+        guard sameDay else { return false }
+        return start < (other.end ?? other.start + 40) && other.start < (end ?? start + 40)
+    }
+
+    /// İçe aktarırken aynı kaydı iki kez eklememek için.
+    var identityKey: String {
+        let day = date.map { String(Int($0.timeIntervalSinceReferenceDate / 86_400)) } ?? "w\(weekday?.rawValue ?? 0)"
+        return "\(ScheduleImporter.normalize(title))|\(day)|\(start)"
+    }
+
+    /// "Perşembe", "Perşembe, Cumartesi", "Hafta içi", "Her gün"
+    static func daysText(_ days: Set<Weekday>) -> String {
+        let sorted = days.sorted()
+        switch sorted {
+        case Weekday.allCases: return "Her gün"
+        case [.monday, .tuesday, .wednesday, .thursday, .friday]: return "Hafta içi"
+        case [.saturday, .sunday]: return "Hafta sonu"
+        default: return sorted.map { sorted.count > 2 ? $0.shortName : $0.name }.joined(separator: ", ")
+        }
+    }
+
     static func clock(_ minutes: Int) -> String {
         String(format: "%02d:%02d", minutes / 60, minutes % 60)
     }

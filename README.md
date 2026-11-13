@@ -7,8 +7,13 @@ Yapı yeni hatırlatma kaynaklarına (tek seferlik hatırlatmalar, rutinler, ba�
 ## Özellikler
 
 - **Bugün ekranı:** haftalık gün şeridi (sola/sağa kaydırınca hafta değişir), "Şu an / Sıradaki" kartı, renkli kartlar.
+- **Açılış animasyonu:** çalan zil, dalgalanan halkalar, harf harf gelen "Remi" (Hareketi Azalt açıksa kısa geçiş).
+- **Elle program:** "+" ile ders ekle (grup adı, birden çok gün ya da tek seferlik tarih, saat, süre kısayolları,
+  yer, not); yazdıkça güncellenen önizleme kartı, kayıtlı grup önerileri, çakışma uyarısı. "Haftalık program"
+  ekranında gün gün düzenleme ve kaydırarak silme; ders detayında "Düzenle".
 - **Excel ile içe aktarma:** "Örnek Excel'i indir" → doldur → "Excel'den içe aktar". Dosya WhatsApp, Mail ya da
   Dosyalar'dan "Paylaş → Remi" ile de açılabilir. Önce önizleme gösterilir, okunamayan satırlar satır numarasıyla listelenir.
+  Program doluysa "Mevcut programa ekle" (elle girilenler kalır, aynı kayıt tekrar eklenmez) ya da "Programın yerine geçsin".
 - **Hatırlatma:** kaç dakika önce (0–120 dk) ve tür (Bildirim / Alarm) Ayarlar'dan; istenirse tek bir kayda özel ayar.
   - *Bildirim:* kilit ekranında bildirim ve ses.
   - *Alarm:* iOS 26+ AlarmKit; Saat uygulamasındaki alarm gibi tam ekran, sessiz modda da çalar. Eski iOS'ta bildirim gönderilir.

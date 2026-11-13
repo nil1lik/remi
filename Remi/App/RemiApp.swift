@@ -5,16 +5,28 @@ import UserNotifications
 struct RemiApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var store = ScheduleStore()
+    @State private var showSplash = true
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
-            ScheduleView()
-                .environment(store)
-                // Dosyalar / WhatsApp / Mail'den "Paylaş → Remi" ile gelen Excel.
-                .onOpenURL { url in
-                    store.prepareImport(from: url)
+            ZStack {
+                ScheduleView()
+                    .scaleEffect(showSplash ? 0.94 : 1)
+                    .opacity(showSplash ? 0 : 1)
+                if showSplash {
+                    SplashView {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) { showSplash = false }
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 1.08)))
+                    .zIndex(1)
                 }
+            }
+            .environment(store)
+            // Dosyalar / WhatsApp / Mail'den "Paylaş → Remi" ile gelen Excel.
+            .onOpenURL { url in
+                store.prepareImport(from: url)
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             // Saat dilimi değişmiş ya da yoğun programda 7 günlük liste bitiyor olabilir.

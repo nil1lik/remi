@@ -2,16 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDisplayName</key>
-	<string>Remi</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>tr</string>
-	<key>NSAlarmKitUsageDescription</key>
-	<string>Derslerin başlamadan önce seni alarmla uyarmak için.</string>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<false/>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -39,5 +29,12 @@
 			</array>
 		</dict>
 	</array>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Derslerin başlamadan önce seni alarmla uyarmak için.</string>
 </dict>
 </plist>
